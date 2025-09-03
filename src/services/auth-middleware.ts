@@ -19,7 +19,7 @@ class AuthMiddleware {
         next();
     }
 
-    public checkAuthentication(req: Request, res: Response, next: NextFunction) {
+    public checkAuthentication(req: Request, _res: Response, next: NextFunction) {
         if (!req.currentUser) {
             throw new BadRequestError('Authentication is required to access this route.', 'GatewayService checkAuthentication() method error');
         }
