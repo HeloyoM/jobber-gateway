@@ -9,9 +9,11 @@ import { CustomError, IErrorResponse, winstonLogger } from '@heloyom/shared-deve
 import http from 'node:http';
 import { StatusCodes } from 'http-status-codes';
 import { config } from "@gateway/config";
-// import { elasticsearch } from "@gateway/elasticsearch";
+import { elasticsearch } from "@gateway/elasticsearch";
 import { appRoutes } from "@gateway/routes";
-import { axiosAuthInstance } from "./services/api/auth.service";
+import { axiosAuthInstance } from "@gateway/services/api/auth.service";
+import { axiosBuyerInstance } from "@gateway/services/api/buyer.service";
+import { axiosSellerInstance } from "@gateway/services/api/seller.service";
 
 const SERVER_PORT = 4000;
 
@@ -28,7 +30,7 @@ export class GatewayServer {
         this.securityMiddleware(this.app);
         this.standardMiddleware(this.app);
         this.routesMiddleware(this.app);
-        // this.startElasticSearch();
+        this.startElasticSearch();
         this.errorHandler(this.app);
         this.startServer(this.app);
     }
@@ -58,6 +60,8 @@ export class GatewayServer {
         app.use((req: Request, _res: Response, next: NextFunction) => {
             if (req.cookies?.jwt) {
                 axiosAuthInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
+                axiosBuyerInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
+                axiosSellerInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
             }
 
             next();
@@ -75,9 +79,9 @@ export class GatewayServer {
         appRoutes(app)
     }
 
-    // private startElasticSearch(): void {
-    //     elasticsearch.checkConnection()
-    // }
+    private startElasticSearch(): void {
+        elasticsearch.checkConnection()
+    }
 
     private errorHandler(app: Application): void {
         app.use(/(.*)/, (req: Request, res: Response, next: NextFunction) => {
