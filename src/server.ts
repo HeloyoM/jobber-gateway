@@ -11,6 +11,7 @@ import { StatusCodes } from 'http-status-codes';
 import { config } from "@gateway/config";
 import { elasticsearch } from "@gateway/elasticsearch";
 import { appRoutes } from "@gateway/routes";
+import { axiosMessageInstance } from "@gateway/services/api/message.service";
 import { axiosAuthInstance } from "@gateway/services/api/auth.service";
 import { axiosBuyerInstance } from "@gateway/services/api/buyer.service";
 import { axiosSellerInstance } from "@gateway/services/api/seller.service";
@@ -18,7 +19,7 @@ import { axiosGigInstance } from "@gateway/services/api/gig.service";
 import { Server } from 'socket.io';
 import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
-import { SocketIOAppHandler } from "./sockets/socket";
+import { SocketIOAppHandler } from "@gateway/sockets/socket";
 
 const SERVER_PORT = 4000;
 const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'apiGatewayServer', 'debug');
@@ -68,6 +69,7 @@ export class GatewayServer {
                 axiosBuyerInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
                 axiosSellerInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
                 axiosGigInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
+                axiosMessageInstance.defaults.headers['Authorization'] = `Bearer ${req.session?.jwt}`;
             }
 
             next();
@@ -126,7 +128,8 @@ export class GatewayServer {
                 methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', "PATCH"]
             }
         });
-        const pubClient = createClient({ url: config.CLIENT_URL })
+        // replace url with client url 
+        const pubClient = createClient({ url: `redis://localhost:6379` })
         const subClient = pubClient.duplicate()
         await Promise.all([pubClient.connect(), subClient.connect()])
         io.adapter(createAdapter(pubClient, subClient));
